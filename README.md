@@ -16,6 +16,17 @@ Client → API Gateway → Lambda → DynamoDB
 
 ---
 
+## Real World Use Case
+
+This architecture is commonly used in serverless applications such as:
+
+- Website visitor tracking
+- Event logging systems
+- Lightweight backend APIs
+- Serverless microservices
+
+Because the system is fully serverless, AWS automatically handles scaling, availability, and infrastructure management.
+
 # Services Used
 
 - Amazon API Gateway
@@ -52,30 +63,51 @@ See: `lambda/lambda_function.py`
 
 ---
 
+## Project Structure
+
+aws-api-lambda-dynamodb
+│
+├── README.md
+├── architecture-diagram.png
+│
+├── lambda
+│   └── lambda_function.py
+│
+└── screenshots
+    ├── 1-dynamodb-table.png
+    ├── 2-lambda-function.png
+    ├── 3-iam-role.png
+    ├── 4-lambda-code.png
+    ├── 5-api-route.png
+    ├── 6-api-stage.png
+    ├── 7-api-test.png
+    └── 8-dynamodb-items.png
+
+
 # Screenshots
 
-## DynamoDB Table
+## 1. DynamoDB Table
 ![DynamoDB Table](screenshots/1-dynamodb-table.png)
 
-## Lambda Function
+## 2. Lambda Function
 ![Lambda Function](screenshots/2-lambda-function.png)
 
-## IAM Role Permissions
+## 3. IAM Role Permissions
 ![IAM Role](screenshots/3-iam-role.png)
 
-## Lambda Code
+## 4. Lambda Code
 ![Lambda Code](screenshots/4-lambda-code.png)
 
-## API Gateway Route
+## 5. API Gateway Route
 ![API Route](screenshots/5-api-route.png)
 
-## API Gateway Stage
+## 6. API Gateway Stage
 ![API Stage](screenshots/6-api-stage.png)
 
-## API Test
+## 7. API Test
 ![API Test](screenshots/7-api-test.png)
 
-## DynamoDB Records
+## 8. DynamoDB Records
 ![DynamoDB Records](screenshots/8-dynamodb-items.png)
 
 ---
