@@ -65,23 +65,19 @@ See: `lambda/lambda_function.py`
 
 ## Project Structure
 
-aws-api-lambda-dynamodb
+```
+aws-s3-lambda-cloudformation
 │
 ├── README.md
-├── architecture-diagram.png
+├── template for CloudFormation.yaml
 │
-├── lambda
-│   └── lambda_function.py
-│
-└── screenshots
-    ├── 1-dynamodb-table.png
-    ├── 2-lambda-function.png
-    ├── 3-iam-role.png
-    ├── 4-lambda-code.png
-    ├── 5-api-route.png
-    ├── 6-api-stage.png
-    ├── 7-api-test.png
-    └── 8-dynamodb-items.png
+├── cf-stack-overview.png
+├── cf-resources.png
+├── s3-upload.png
+├── cloudwatch-logs.png
+├── architecture-flow.png
+└── visual-designer.png
+```
 
 
 # Screenshots
