@@ -176,6 +176,58 @@ serverless-visitor-api/
 
 ---
 
+## Troubleshooting
+
+### 1. Lambda Execution Role Missing `dynamodb:PutItem` — Silent 502 from API Gateway
+
+After deploying and testing the endpoint, API Gateway was returning a `502 Bad Gateway` with no useful error message in the response. The Lambda function appeared healthy in the console and the code had no syntax errors.
+
+The root cause took a while to find: the IAM execution role attached to Lambda had a managed policy that granted DynamoDB read access (`AmazonDynamoDBReadOnlyAccess`) — but not write access. The `PutItem` call was being silently denied by IAM, which caused Lambda to throw an unhandled `AccessDeniedException`. API Gateway translated that uncaught exception into a generic 502 rather than surfacing the actual error.
+
+**Fix:** Created a custom inline IAM policy scoped specifically to `dynamodb:PutItem` on the exact table ARN, replacing the overly broad managed policy. Also added explicit error handling in the Lambda function to catch `ClientError` exceptions from boto3 and return a structured `500` response — making future permission issues immediately visible instead of swallowed by the gateway.
+
+**Lesson:** API Gateway 502s almost always mean Lambda threw an unhandled exception. Always wrap boto3 calls in try/except and log the full error to CloudWatch before debugging anything else.
+
+---
+
+### 2. DynamoDB Writes Succeeding but Items Never Visible in Console
+
+After fixing the IAM issue, the API returned `200 OK` and CloudWatch logs confirmed `PutItem` was being called without errors — but the DynamoDB console showed an empty table every time.
+
+The issue was a region mismatch. The `boto3` client inside Lambda was being instantiated without an explicit region:
+
+```python
+dynamodb = boto3.resource('dynamodb')
+```
+
+Without a region specified, boto3 falls back to the `AWS_DEFAULT_REGION` environment variable, which in this Lambda environment resolved to `us-east-1`. The DynamoDB table had been created in `eu-west-1`. The writes were succeeding — but landing in a completely different table that didn't exist yet, so DynamoDB auto-created a new empty table in `us-east-1` and wrote there silently.
+
+**Fix:** Explicitly passed the region when instantiating the boto3 resource:
+
+```python
+dynamodb = boto3.resource('dynamodb', region_name='eu-west-1')
+```
+
+And added the table name and region as Lambda environment variables to avoid hardcoding and make the function portable across environments.
+
+**Lesson:** Never rely on implicit region resolution inside Lambda. Always declare the region explicitly in boto3 clients and externalise configuration (table names, regions, endpoints) as environment variables.
+
+---
+
+## What I Learned
+
+Building this project moved me past following tutorials and into genuine problem-solving. A few things that shifted my understanding:
+
+**IAM is the hardest part of AWS — and the most important.** Permissions failures in AWS are rarely obvious. Services fail silently, error messages are generic, and the blast radius of an overly permissive role is invisible until it matters. I now treat IAM design as a first-class concern, not an afterthought — defining the minimum required permissions before writing a single line of application code.
+
+**Serverless doesn't mean zero ops — it means different ops.** There are no servers to patch, but there are cold starts, execution timeouts, memory limits, and region configurations to reason about. I learned to treat Lambda functions as stateless units with explicit configuration, not scripts that "just run in the cloud."
+
+**CloudWatch is non-negotiable for serverless debugging.** When there's no server to SSH into, structured logging is your only window into what's happening. I built the habit of logging inputs, outputs, and exceptions at every integration boundary — which cut my debugging time significantly once issues like the region mismatch appeared.
+
+**End-to-end testing reveals what unit testing misses.** The IAM and region issues only surfaced when the full request path was exercised. I learned to test the complete flow — from HTTP request to DynamoDB record — as early as possible, rather than validating each service in isolation and assuming integration will be smooth.
+
+---
+
 ## Author
 
 **Sergiu Gota**
